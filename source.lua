@@ -959,7 +959,7 @@ end)
 	end	
 
 	local TabFunction = {}
-        function TabFunction:MakeTab(TabConfig)
+    function TabFunction:MakeTab(TabConfig)
         TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
         TabConfig.Icon = TabConfig.Icon or ""
@@ -1028,7 +1028,7 @@ end)
                         BackgroundTransparency = 1
                     }):Play()
 
-                    task.delay(0.35, function()
+                    delay(0.35, function()
                         ItemContainer.Visible = false
                         ItemContainer.Position = UDim2.new(0, 150, 0, 50)
                         ItemContainer.BackgroundTransparency = 0
@@ -1051,6 +1051,7 @@ end)
             TabFrame.Title.Font = Enum.Font.GothamBlack
         end)
     end
+
 
 
 		local function GetElements(ItemParent)
