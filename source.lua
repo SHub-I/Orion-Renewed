@@ -28,9 +28,7 @@ local OrionLib = {
 }
 
 -- Lucide Icons (latte-soft)
-local Lucide = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/latte-soft/lucide-roblox/main/src/Icons.lua"
-))()
+local Lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/main/src/Icons.lua"))()
 
 local function GetIcon(IconName)
     return Lucide.getIcon(IconName)
