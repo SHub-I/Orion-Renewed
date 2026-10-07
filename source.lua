@@ -28,15 +28,11 @@ local OrionLib = {
 }
 
 -- Lucide Icons (Rayfield version)
-local Lucide = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"
-))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"))()
 
 local function GetIcon(name)
-    return Lucide.getIcon(name)
+    return Icons[name]  -- Rayfield icons.lua defines "Icons"
 end
-
-   
 
 local Orion = Instance.new("ScreenGui")
 Orion.Name = "Orion"
