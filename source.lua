@@ -959,7 +959,7 @@ end)
 	end	
 
 	local TabFunction = {}
-    function TabFunction:MakeTab(TabConfig)
+        function TabFunction:MakeTab(TabConfig)
         TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
         TabConfig.Icon = TabConfig.Icon or ""
