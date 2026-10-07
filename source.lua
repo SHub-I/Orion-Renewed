@@ -465,7 +465,7 @@ end
 
 
 ---------------------------------------------------------------------
--- RAYFIELD GEN2 STYLE THEME SYSTEM FOR ORION RENEWED
+-- RAYFIELD GEN2 STYLE FILE-BASED THEME SYSTEM FOR ORION RENEWED
 ---------------------------------------------------------------------
 
 local HttpService = game:GetService("HttpService")
@@ -494,10 +494,7 @@ end
 -- NEW THEME STORAGE
 ---------------------------------------------------------------------
 
-OrionLib.ThemeObjects = {}  -- stays the same
-OrionLib.SelectedTheme = "Default"
-
--- Base theme (fallback)
+-- Remove your old Themes table entirely.
 OrionLib.Themes = {
     Default = {
         Main = Color3.fromRGB(25,25,25),
@@ -508,6 +505,9 @@ OrionLib.Themes = {
         TextDark = Color3.fromRGB(150,150,150)
     }
 }
+
+OrionLib.SelectedTheme = "Default"
+OrionLib.ThemeObjects = {} -- keep this
 
 ---------------------------------------------------------------------
 -- REGISTER THEME OBJECTS
@@ -593,6 +593,14 @@ function OrionLib:DeleteThemeFile(name)
         return true
     end
     return false
+end
+
+---------------------------------------------------------------------
+-- AUTO-CREATE THEME FOLDER ON EXECUTION
+---------------------------------------------------------------------
+
+if not isfolder("OrionThemes") then
+    makefolder("OrionThemes")
 end
 
 
