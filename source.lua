@@ -727,36 +727,56 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 ---------------------------------------------------------------------
--- DragBar (Top-bar window dragging)
+-- Rayfield‑Style DragBar (Hover → Hold → Bounce)
 ---------------------------------------------------------------------
 
 local DragBar = Create("Frame", {
     Parent = MainWindow,
     Name = "DragBar",
-    Size = UDim2.new(1, 0, 0, 32),
-    BackgroundTransparency = 1,
-    ZIndex = 10
+    AnchorPoint = Vector2.new(0.5, 1),
+    Position = UDim2.new(0.5, 0, 1, -40),
+    Size = UDim2.new(0, 120, 0, 10),
+    BackgroundTransparency = 1
 })
 
 local DragIcon = MakeElement("Image", "arrow-down-right")
 DragIcon.Parent = DragBar
-DragIcon.Size = UDim2.new(0, 16, 0, 16)
-DragIcon.Position = UDim2.new(0, 10, 0.5, -8)
+DragIcon.Size = UDim2.new(0, 18, 0, 18)
+DragIcon.Position = UDim2.new(0.5, -9, 0.5, -9)
 DragIcon.ImageColor3 = OrionLib.Themes[OrionLib.SelectedTheme].TextDark
-DragIcon.ImageTransparency = 0.35
+DragIcon.ImageTransparency = 0.55
 
 local dragging = false
 local dragStartPos
 local windowStartPos
 
+-- Hover animation (Rayfield style)
+DragBar.MouseEnter:Connect(function()
+    TweenService:Create(DragIcon, TweenInfo.new(0.18, Enum.EasingStyle.Quint), {
+        ImageTransparency = 0.25,
+        Size = UDim2.new(0, 20, 0, 20)
+    }):Play()
+end)
+
+DragBar.MouseLeave:Connect(function()
+    if not dragging then
+        TweenService:Create(DragIcon, TweenInfo.new(0.22, Enum.EasingStyle.Quint), {
+            ImageTransparency = 0.55,
+            Size = UDim2.new(0, 18, 0, 18)
+        }):Play()
+    end
+end)
+
+-- Hold animation (Rayfield bounce)
 DragBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
         windowStartPos = MainWindow.Position
 
-        TweenService:Create(DragIcon, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
-            ImageTransparency = 0
+        TweenService:Create(DragIcon, TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            ImageTransparency = 0,
+            Size = UDim2.new(0, 22, 0, 22)
         }):Play()
     end
 end)
@@ -765,12 +785,14 @@ DragBar.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
 
-        TweenService:Create(DragIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
-            ImageTransparency = 0.35
+        TweenService:Create(DragIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+            ImageTransparency = 0.55,
+            Size = UDim2.new(0, 18, 0, 18)
         }):Play()
     end
 end)
 
+-- Drag movement (smooth)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStartPos
