@@ -653,20 +653,29 @@ local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame",
 }), "Main")
 
 ---------------------------------------------------------------------
--- ReScale (Bottom-right resize handle)
+-- ReScale (Bottom-right resize handle) — Smooth + Icon
 ---------------------------------------------------------------------
 
 local ResizeHandle = Create("Frame", {
     Parent = MainWindow,
     AnchorPoint = Vector2.new(1, 1),
-    Position = UDim2.new(1, -6, 1, -6),
-    Size = UDim2.new(0, 14, 0, 14),
+    Position = UDim2.new(1, -8, 1, -8),
+    Size = UDim2.new(0, 18, 0, 18),
     BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Second,
-    BorderSizePixel = 0
+    BorderSizePixel = 0,
+    Name = "ResizeHandle"
 })
 
-MakeElement("Corner", 0, 4).Parent = ResizeHandle
+MakeElement("Corner", 0, 6).Parent = ResizeHandle
 AddThemeObject(ResizeHandle, "Second")
+
+-- Icon inside the handle
+local ResizeIcon = MakeElement("Image", "arrow-down-right")
+ResizeIcon.Parent = ResizeHandle
+ResizeIcon.Size = UDim2.new(0, 14, 0, 14)
+ResizeIcon.Position = UDim2.new(0.5, -7, 0.5, -7)
+ResizeIcon.ImageTransparency = 0.25
+ResizeIcon.ImageColor3 = OrionLib.Themes[OrionLib.SelectedTheme].TextDark
 
 local resizing = false
 local resizeStartPos
@@ -677,12 +686,22 @@ ResizeHandle.InputBegan:Connect(function(input)
         resizing = true
         resizeStartPos = Vector2.new(input.Position.X, input.Position.Y)
         resizeStartSize = MainWindow.Size
+
+        -- Slight highlight when grabbing
+        TweenService:Create(ResizeIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            ImageTransparency = 0
+        }):Play()
     end
 end)
 
 ResizeHandle.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         resizing = false
+
+        -- Fade back after release
+        TweenService:Create(ResizeIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+            ImageTransparency = 0.25
+        }):Play()
     end
 end)
 
@@ -693,7 +712,10 @@ UserInputService.InputChanged:Connect(function(input)
         local newW = math.clamp(resizeStartSize.X.Offset + delta.X, 350, 1200)
         local newH = math.clamp(resizeStartSize.Y.Offset + delta.Y, 200, 900)
 
-        MainWindow.Size = UDim2.new(0, newW, 0, newH)
+        -- Smooth resize
+        TweenService:Create(MainWindow, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, newW, 0, newH)
+        }):Play()
 
         -- Update tab containers
         for _, child in ipairs(MainWindow:GetChildren()) do
@@ -703,6 +725,7 @@ UserInputService.InputChanged:Connect(function(input)
         end
     end
 end)
+
 
 
 
