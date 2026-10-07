@@ -727,28 +727,134 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 ---------------------------------------------------------------------
--- Rayfield‑Style Bottom DragBar (Footer Bar)
+-- Rayfield-Style DragBar Cosmetic (White transparent bar)
 ---------------------------------------------------------------------
 
-local BottomBar = Create("Frame", {
+local DragBarCosmetic = Create("Frame", {
     Parent = MainWindow,
-    Name = "BottomBar",
-    Size = UDim2.new(1, 0, 0, 6),
-    Position = UDim2.new(0, 0, 1, -6),
-    BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Second,
+    Name = "DragBarCosmetic",
+    AnchorPoint = Vector2.new(0.5, 1),
+    Position = UDim2.new(0.5, 0, 1, -2),
+    Size = UDim2.new(0, 100, 0, 4),
+    BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+    BackgroundTransparency = 0.7,
     BorderSizePixel = 0
 })
 
-AddThemeObject(BottomBar, "Second")
+MakeElement("Corner", 0, 2).Parent = DragBarCosmetic
 
--- Optional subtle top stroke (Rayfield style)
-local BottomBarStroke = MakeElement("Frame")
-BottomBarStroke.Parent = BottomBar
-BottomBarStroke.Size = UDim2.new(1, 0, 0, 1)
-BottomBarStroke.Position = UDim2.new(0, 0, 0, 0)
-BottomBarStroke.BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Stroke
 
-AddThemeObject(BottomBarStroke, "Stroke")
+---------------------------------------------------------------------
+-- Invisible Drag Zone (Rayfield-style)
+---------------------------------------------------------------------
+
+local DragBar = Create("Frame", {
+    Parent = MainWindow,
+    Name = "DragBar",
+    AnchorPoint = Vector2.new(0.5, 1),
+    Position = UDim2.new(0.5, 0, 1, -12),
+    Size = UDim2.new(0, 140, 0, 14),
+    BackgroundTransparency = 1
+})
+
+
+---------------------------------------------------------------------
+-- Hover Animation (Rayfield)
+---------------------------------------------------------------------
+
+local dragging = false
+local dragStartPos
+local windowStartPos
+
+DragBar.MouseEnter:Connect(function()
+    if not dragging then
+        TweenService:Create(
+            DragBarCosmetic,
+            TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {
+                BackgroundTransparency = 0.5,
+                Size = UDim2.new(0, 120, 0, 4)
+            }
+        ):Play()
+    end
+end)
+
+DragBar.MouseLeave:Connect(function()
+    if not dragging then
+        TweenService:Create(
+            DragBarCosmetic,
+            TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {
+                BackgroundTransparency = 0.7,
+                Size = UDim2.new(0, 100, 0, 4)
+            }
+        ):Play()
+    end
+end)
+
+
+---------------------------------------------------------------------
+-- Drag Start (Rayfield taptic bounce)
+---------------------------------------------------------------------
+
+DragBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
+        windowStartPos = MainWindow.Position
+
+        TweenService:Create(
+            DragBarCosmetic,
+            TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {
+                Size = UDim2.new(0, 110, 0, 4),
+                BackgroundTransparency = 0
+            }
+        ):Play()
+    end
+end)
+
+
+---------------------------------------------------------------------
+-- Drag End (Rayfield relax)
+---------------------------------------------------------------------
+
+DragBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+
+        TweenService:Create(
+            DragBarCosmetic,
+            TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {
+                Size = UDim2.new(0, 100, 0, 4),
+                BackgroundTransparency = 0.7
+            }
+        ):Play()
+    end
+end)
+
+
+---------------------------------------------------------------------
+-- Drag Movement (Smooth Rayfield motion)
+---------------------------------------------------------------------
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStartPos
+
+        MainWindow.Position = UDim2.new(
+            windowStartPos.X.Scale,
+            windowStartPos.X.Offset + delta.X,
+            windowStartPos.Y.Scale,
+            windowStartPos.Y.Offset + delta.Y
+        )
+
+        -- Keep dragbar attached to bottom
+        DragBarCosmetic.Position = UDim2.new(0.5, 0, 1, -2)
+        DragBar.Position = UDim2.new(0.5, 0, 1, -12)
+    end
+end)
 
 
 
