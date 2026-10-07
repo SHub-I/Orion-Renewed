@@ -615,41 +615,88 @@ function OrionLib:MakeWindow(WindowConfig)
 		Position = UDim2.new(0, 0, 1, -1)
 	}), "Stroke")
 
-	local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-		Parent = Orion,
-		Position = UDim2.new(0.5, -307, 0.5, -172),
-		Size = UDim2.new(0, 615, 0, 344),
-		ClipsDescendants = true
-	}), {
-		--SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
-		--	AnchorPoint = Vector2.new(0.5, 0.5),
-		--	Position = UDim2.new(0.5, 0, 0.5, 0),
-		--	Size = UDim2.new(1, 80, 1, 320),
-		--	ImageColor3 = Color3.fromRGB(33, 33, 33),
-		--	ImageTransparency = 0.7
-		--}),
-		SetChildren(SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 50),
-			Name = "TopBar"
-		}), {
-			WindowName,
-			WindowTopBarLine,
-			AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
-				Size = UDim2.new(0, 70, 0, 30),
-				Position = UDim2.new(1, -90, 0, 10)
-			}), {
-				AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				AddThemeObject(SetProps(MakeElement("Frame"), {
-					Size = UDim2.new(0, 1, 1, 0),
-					Position = UDim2.new(0.5, 0, 0, 0)
-				}), "Stroke"), 
-				CloseBtn,
-				MinimizeBtn
-			}), "Second"), 
-		}),
-		DragPoint,
-		WindowStuff
-	}), "Main")
+local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
+    Parent = Orion,
+    Position = UDim2.new(0.5, -307, 0.5, -172),
+    Size = UDim2.new(0, 615, 0, 344),
+    ClipsDescendants = true
+}), {
+    SetChildren(SetProps(MakeElement("TFrame"), {
+        Size = UDim2.new(1, 0, 0, 50),
+        Name = "TopBar"
+    }), {
+        WindowName,
+        WindowTopBarLine,
+        AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
+            Size = UDim2.new(0, 70, 0, 30),
+            Position = UDim2.new(1, -90, 0, 10)
+        }), {
+            AddThemeObject(MakeElement("Stroke"), "Stroke"),
+            AddThemeObject(SetProps(MakeElement("Frame"), {
+                Size = UDim2.new(0, 1, 1, 0),
+                Position = UDim2.new(0.5, 0, 0, 0)
+            }), "Stroke"), 
+            CloseBtn,
+            MinimizeBtn
+        }), "Second"), 
+    }),
+    DragPoint,
+    WindowStuff
+}), "Main")
+
+---------------------------------------------------------------------
+-- ReScale (Bottom-right resize handle)
+---------------------------------------------------------------------
+
+local ResizeHandle = Create("Frame", {
+    Parent = MainWindow,
+    AnchorPoint = Vector2.new(1, 1),
+    Position = UDim2.new(1, -6, 1, -6),
+    Size = UDim2.new(0, 14, 0, 14),
+    BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Second,
+    BorderSizePixel = 0
+})
+
+MakeElement("Corner", 0, 4).Parent = ResizeHandle
+AddThemeObject(ResizeHandle, "Second")
+
+local resizing = false
+local resizeStartPos
+local resizeStartSize
+
+ResizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        resizing = true
+        resizeStartPos = Vector2.new(input.Position.X, input.Position.Y)
+        resizeStartSize = MainWindow.Size
+    end
+end)
+
+ResizeHandle.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        resizing = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - resizeStartPos
+
+        local newW = math.clamp(resizeStartSize.X.Offset + delta.X, 350, 1200)
+        local newH = math.clamp(resizeStartSize.Y.Offset + delta.Y, 200, 900)
+
+        MainWindow.Size = UDim2.new(0, newW, 0, newH)
+
+        -- Update tab containers
+        for _, child in ipairs(MainWindow:GetChildren()) do
+            if child.Name == "ItemContainer" then
+                child.Size = UDim2.new(1, -150, 1, -50)
+            end
+        end
+    end
+end)
+
+
 
 	if WindowConfig.ShowIcon then
 		WindowName.Position = UDim2.new(0, 50, 0, -24)
