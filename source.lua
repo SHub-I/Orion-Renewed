@@ -726,6 +726,66 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
+---------------------------------------------------------------------
+-- DragBar (Top-bar window dragging)
+---------------------------------------------------------------------
+
+local DragBar = Create("Frame", {
+    Parent = MainWindow,
+    Name = "DragBar",
+    Size = UDim2.new(1, 0, 0, 32),
+    BackgroundTransparency = 1,
+    ZIndex = 10
+})
+
+local DragIcon = MakeElement("Image", "arrow-down-right")
+DragIcon.Parent = DragBar
+DragIcon.Size = UDim2.new(0, 16, 0, 16)
+DragIcon.Position = UDim2.new(0, 10, 0.5, -8)
+DragIcon.ImageColor3 = OrionLib.Themes[OrionLib.SelectedTheme].TextDark
+DragIcon.ImageTransparency = 0.35
+
+local dragging = false
+local dragStartPos
+local windowStartPos
+
+DragBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
+        windowStartPos = MainWindow.Position
+
+        TweenService:Create(DragIcon, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+            ImageTransparency = 0
+        }):Play()
+    end
+end)
+
+DragBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+
+        TweenService:Create(DragIcon, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+            ImageTransparency = 0.35
+        }):Play()
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStartPos
+
+        TweenService:Create(MainWindow, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = UDim2.new(
+                windowStartPos.X.Scale,
+                windowStartPos.X.Offset + delta.X,
+                windowStartPos.Y.Scale,
+                windowStartPos.Y.Offset + delta.Y
+            )
+        }):Play()
+    end
+end)
+
 
 
 
