@@ -448,19 +448,156 @@ function OrionLib:MakeNotification(NotificationConfig)
 end    
 
 function OrionLib:Init()
-	if OrionLib.SaveCfg then	
-		pcall(function()
-			if isfile(OrionLib.Folder .. "/" .. game.GameId .. ".txt") then
-				LoadCfg(readfile(OrionLib.Folder .. "/" .. game.GameId .. ".txt"))
-				OrionLib:MakeNotification({
-					Name = "Configuration",
-					Content = "Auto-loaded configuration for the game " .. game.GameId .. ".",
-					Time = 5
-				})
-			end
-		end)		
-	end	
-end	
+    -----------------------------------------------------------------
+    -- Load configuration (existing behavior)
+    -----------------------------------------------------------------
+    if OrionLib.SaveCfg then
+        pcall(function()
+            local cfgPath = OrionLib.Folder .. "/" .. game.GameId .. ".txt"
+            if isfile(cfgPath) then
+                LoadCfg(readfile(cfgPath))
+                OrionLib:MakeNotification({
+                    Name = "Configuration",
+                    Content = "Auto-loaded configuration for the game " .. game.GameId .. ".",
+                    Time = 5
+                })
+            end
+        end)
+    end
+
+    -----------------------------------------------------------------
+    -- Load theme if AutoLoad.json exists
+    -----------------------------------------------------------------
+    pcall(function()
+        if isfolder("OrionThemes") and isfile("OrionThemes/AutoLoad.json") then
+            local themeName = readfile("OrionThemes/AutoLoad.json")
+            local themePath = "OrionThemes/" .. themeName .. ".json"
+
+            if isfile(themePath) then
+                local data = HttpService:JSONDecode(readfile(themePath))
+
+                for key, col in pairs(data) do
+                    OrionLib.Themes[OrionLib.SelectedTheme][key] =
+                        Color3.fromRGB(col.R, col.G, col.B)
+                end
+
+                OrionLib:ApplyTheme()
+
+                OrionLib:MakeNotification({
+                    Name = "Theme Loaded",
+                    Content = "Auto-loaded theme: " .. themeName,
+                    Time = 5
+                })
+            else
+                OrionLib:MakeNotification({
+                    Name = "Theme Missing",
+                    Content = "Auto-load theme '" .. themeName .. "' not found.",
+                    Time = 5
+                })
+            end
+        end
+    end)
+
+    -----------------------------------------------------------------
+    -- Reset theme to default if requested
+    -----------------------------------------------------------------
+    pcall(function()
+        if isfile("OrionThemes/ResetTheme.flag") then
+            OrionLib.Themes["Default"] = {
+                Main = Color3.fromRGB(25,25,25),
+                Second = Color3.fromRGB(32,32,32),
+                Stroke = Color3.fromRGB(60,60,60),
+                Divider = Color3.fromRGB(60,60,60),
+                Text = Color3.fromRGB(240,240,240),
+                TextDark = Color3.fromRGB(150,150,150)
+            }
+
+            OrionLib:ApplyTheme()
+            delfile("OrionThemes/ResetTheme.flag")
+
+            OrionLib:MakeNotification({
+                Name = "Theme Reset",
+                Content = "Theme reset to default.",
+                Time = 5
+            })
+        end
+    end)
+end
+
+
+---------------------------------------------------------------------
+-- FULL THEME SYSTEM FOR ORION RENEWED
+---------------------------------------------------------------------
+
+-- Convert hex → Color3
+local function HexToColor3(hex)
+    hex = hex:gsub("#","")
+    if #hex ~= 6 then return Color3.new(1,1,1) end
+    local r = tonumber(hex:sub(1,2),16)
+    local g = tonumber(hex:sub(3,4),16)
+    local b = tonumber(hex:sub(5,6),16)
+    return Color3.fromRGB(r,g,b)
+end
+
+-- Convert Color3 → hex
+local function Color3ToHex(c)
+    return string.format("#%02X%02X%02X", math.floor(c.R*255), math.floor(c.G*255), math.floor(c.B*255))
+end
+
+-- Save theme to file
+function OrionLib:SaveTheme(name)
+    if not isfolder("OrionThemes") then
+        makefolder("OrionThemes")
+    end
+
+    local data = {}
+    for key, col in pairs(OrionLib.Themes[OrionLib.SelectedTheme]) do
+        data[key] = {
+            R = math.floor(col.R * 255),
+            G = math.floor(col.G * 255),
+            B = math.floor(col.B * 255)
+        }
+    end
+
+    writefile("OrionThemes/"..name..".json", HttpService:JSONEncode(data))
+end
+
+-- Load theme from file
+function OrionLib:LoadTheme(name)
+    local path = "OrionThemes/"..name..".json"
+    if not isfile(path) then return false end
+
+    local data = HttpService:JSONDecode(readfile(path))
+    for key, col in pairs(data) do
+        OrionLib.Themes[OrionLib.SelectedTheme][key] = Color3.fromRGB(col.R, col.G, col.B)
+    end
+
+    OrionLib:ApplyTheme()
+    return true
+end
+
+-- Delete theme file
+function OrionLib:DeleteTheme(name)
+    local path = "OrionThemes/"..name..".json"
+    if isfile(path) then
+        delfile(path)
+        return true
+    end
+    return false
+end
+
+-- Apply theme to all objects
+function OrionLib:ApplyTheme()
+    for themeKey, objects in pairs(OrionLib.ThemeObjects) do
+        for _, obj in ipairs(objects) do
+            local prop = ReturnProperty(obj)
+            if prop then
+                obj[prop] = OrionLib.Themes[OrionLib.SelectedTheme][themeKey]
+            end
+        end
+    end
+end
+
 
 function OrionLib:MakeWindow(WindowConfig)
 	local FirstTab = true
