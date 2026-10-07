@@ -1024,6 +1024,37 @@ end)
             for _, ItemContainer in next, MainWindow:GetChildren() do
                 if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
                     TweenService:Create(ItemContainer, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+                        Position = ItemContainer.Position + UDim2.new(0, 200, 0, 0),
+                        BackgroundTransparency = 1
+                    }):Play()
+
+                    task.delay(0.35, function()
+                        ItemContainer.Visible = false
+                        ItemContainer.Position = UDim2.new(0, 150, 0, 50)
+                        ItemContainer.BackgroundTransparency = 0
+                    end)
+                end    
+            end  
+
+            Container.Visible = true
+            Container.Position = UDim2.new(0, 150, 0, -40)
+            Container.BackgroundTransparency = 1
+
+            TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+                Position = UDim2.new(0, 150, 0, 50),
+                BackgroundTransparency = 0
+            }):Play()
+
+            TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
+            TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
+
+            TabFrame.Title.Font = Enum.Font.GothamBlack
+        end)
+
+
+            for _, ItemContainer in next, MainWindow:GetChildren() do
+                if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
+                    TweenService:Create(ItemContainer, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
                         Position = UDim2.new(0, 200, ItemContainer.Position.Y.Scale, ItemContainer.Position.Y.Offset),
                         BackgroundTransparency = 1
                     }):Play()
