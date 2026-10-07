@@ -2,18 +2,6 @@
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
--- safeDelay: use task.delay when available, otherwise fallback to spawn+wait
-local function safeDelay(t, fn)
-    if type(task) == "table" and type(task.delay) == "function" then
-        task.delay(t, fn)
-    else
-        spawn(function()
-            wait(t)
-            fn()
-        end)
-    end
-end
-
 local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
@@ -1028,24 +1016,23 @@ end)
             for _, Tab in next, TabHolder:GetChildren() do
                 if Tab:IsA("TextButton") then
                     Tab.Title.Font = Enum.Font.GothamSemibold
-                    TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0.4}):Play()
-                    TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
+                    pcall(function()
+                        TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0.4}):Play()
+                        TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
+                    end)
                 end    
             end
 
             for _, ItemContainer in next, MainWindow:GetChildren() do
                 if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
-                    -- animate old container out (slide right + fade)
-                    local success, _ = pcall(function()
+                    pcall(function()
                         TweenService:Create(ItemContainer, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
                             Position = ItemContainer.Position + UDim2.new(0, 200, 0, 0),
                             BackgroundTransparency = 1
                         }):Play()
                     end)
 
-                    -- hide after animation using safeDelay
                     safeDelay(0.35, function()
-                        -- guard in case object was destroyed
                         if ItemContainer and ItemContainer.Parent then
                             ItemContainer.Visible = false
                             ItemContainer.Position = UDim2.new(0, 150, 0, 50)
@@ -1055,7 +1042,6 @@ end)
                 end    
             end  
 
-            -- prepare new container and animate in (slide down + fade)
             Container.Visible = true
             Container.Position = UDim2.new(0, 150, 0, -40)
             Container.BackgroundTransparency = 1
@@ -1067,7 +1053,6 @@ end)
                 }):Play()
             end)
 
-            -- highlight selected tab
             pcall(function()
                 TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
                 TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
@@ -1077,6 +1062,8 @@ end)
         end)
     end
 
+
+	
 		local function GetElements(ItemParent)
 			local ElementFunction = {}
 			function ElementFunction:AddLabel(Text)
