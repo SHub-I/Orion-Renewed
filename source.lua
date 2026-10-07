@@ -27,6 +27,8 @@ local OrionLib = {
 	SaveCfg = false
 }
 
+_G.OrionLib = OrionLib
+
 -- Lucide Icons (Rayfield version)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"))()
 
