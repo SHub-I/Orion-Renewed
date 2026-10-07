@@ -713,7 +713,7 @@ UserInputService.InputChanged:Connect(function(input)
         local newH = math.clamp(resizeStartSize.Y.Offset + delta.Y, 200, 900)
 
         -- Smooth resize
-        TweenService:Create(MainWindow, TweenInfo.new(0.02, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TweenService:Create(MainWindow, TweenInfo.new(0.10, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, newW, 0, newH)
         }):Play()
 
