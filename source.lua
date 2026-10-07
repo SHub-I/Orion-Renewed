@@ -27,12 +27,15 @@ local OrionLib = {
 	SaveCfg = false
 }
 
--- Lucide Icons (latte-soft)
-local Lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/latte-soft/lucide-roblox/main/src/Icons.lua"))()
+-- Lucide Icons (Rayfield version)
+local Lucide = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"
+))()
 
-local function GetIcon(IconName)
-    return Lucide.getIcon(IconName)
+local function GetIcon(name)
+    return Lucide.getIcon(name)
 end
+
    
 
 local Orion = Instance.new("ScreenGui")
