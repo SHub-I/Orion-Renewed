@@ -1992,13 +1992,13 @@ end)
 					TextTransparency = 0.4
 				}), "Text")
 			})
-		end
 		return ElementFunction   
 	end
 	
 
 	return TabFunction
-end   
+end
+
 
 function OrionLib:Destroy()
 	Orion:Destroy()
