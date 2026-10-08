@@ -1343,13 +1343,35 @@ end)
 					end
 				end)
 
-				function Slider:Set(Value)
-					self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
-					TweenService:Create(SliderDrag,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.fromScale((self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)}):Play()
-					SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-					SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-					SliderConfig.Callback(self.Value)
-				end      
+                function Slider:Set(Value)
+
+                    self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
+
+                    local Range = SliderConfig.Max - SliderConfig.Min
+                    if Range <= 0 then
+                        Range = 1
+                    end
+
+                    local Scale = math.clamp(
+                        (self.Value - SliderConfig.Min) / Range,
+                        0,
+                        1
+                    )
+
+                    TweenService:Create(
+                        SliderDrag,
+                        TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {
+                            Size = UDim2.fromScale(Scale, 1)
+                        }
+                    ):Play()
+
+                    SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
+                    SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
+
+                    SliderConfig.Callback(self.Value)
+
+                end      
 
 				Slider:Set(Slider.Value)
 				if SliderConfig.Flag then				
