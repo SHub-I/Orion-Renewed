@@ -1957,49 +1957,56 @@ end)
 		end
 
         if TabConfig and TabConfig.PremiumOnly then
-            for i, v in next, ElementFunction do
-                ElementFunction[i] = function() end
-            end
-            local uiList = Container:FindFirstChild("UIListLayout")
-            if uiList then uiList:Destroy() end
-            local uiPad = Container:FindFirstChild("UIPadding")
-            if uiPad then uiPad:Destroy() end
+		if TabConfig.PremiumOnly then
+			for i, v in next, ElementFunction do
+				ElementFunction[i] = function() end
+			end    
+			Container:FindFirstChild("UIListLayout"):Destroy()
+			Container:FindFirstChild("UIPadding"):Destroy()
+			SetChildren(SetProps(MakeElement("TFrame"), {
+				Size = UDim2.new(1, 0, 1, 0),
+				Parent = ItemParent
+			}), {
+				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://3610239960"), {
+					Size = UDim2.new(0, 18, 0, 18),
+					Position = UDim2.new(0, 15, 0, 15),
+					ImageTransparency = 0.4
+				}), "Text"),
+				AddThemeObject(SetProps(MakeElement("Label", "Unauthorised Access", 14), {
+					Size = UDim2.new(1, -38, 0, 14),
+					Position = UDim2.new(0, 38, 0, 18),
+					TextTransparency = 0.4
+				}), "Text"),
+				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4483345875"), {
+					Size = UDim2.new(0, 56, 0, 56),
+					Position = UDim2.new(0, 84, 0, 110),
+				}), "Text"),
+				AddThemeObject(SetProps(MakeElement("Label", "Premium Features", 14), {
+					Size = UDim2.new(1, -150, 0, 14),
+					Position = UDim2.new(0, 150, 0, 112),
+					Font = Enum.Font.GothamBold
+				}), "Text"),
+				AddThemeObject(SetProps(MakeElement("Label", "This part of the script is locked to Sirius Premium users. Purchase Premium in the Discord server (sirius.menu/discord)", 12), {
+					Size = UDim2.new(1, -200, 0, 14),
+					Position = UDim2.new(0, 150, 0, 138),
+					TextWrapped = true,
+					TextTransparency = 0.4
+				}), "Text")
+			})
+		end
+		return ElementFunction   
+	end  
+	
+	OrionLib:MakeNotification({
+		Name = "UI Library Upgrade",
+		Content = "New UI Library Available at sirius.menu/discord and sirius.menu/rayfield",
+		Time = 5
+	})
+	
 
-            SetChildren(SetProps(MakeElement("TFrame"), {
-                Size = UDim2.new(1, 0, 1, 0),
-                Parent = ItemParent
-            }), {
-                AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://3610239960"), {
-                    Size = UDim2.new(0, 18, 0, 18),
-                    Position = UDim2.new(0, 15, 0, 15),
-                    ImageTransparency = 0.4
-                }), "Text"),
-                AddThemeObject(SetProps(MakeElement("Label", "Unauthorised Access", 14), {
-                    Size = UDim2.new(1, -38, 0, 14),
-                    Position = UDim2.new(0, 38, 0, 18),
-                    TextTransparency = 0.4
-                }), "Text"),
-                AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4483345875"), {
-                    Size = UDim2.new(0, 56, 0, 56),
-                    Position = UDim2.new(0, 84, 0, 110),
-                }), "Text"),
-                AddThemeObject(SetProps(MakeElement("Label", "Premium Features", 14), {
-                    Size = UDim2.new(1, -150, 0, 14),
-                    Position = UDim2.new(0, 150, 0, 112),
-                    Font = Enum.Font.GothamBold
-                }), "Text"),
-                AddThemeObject(SetProps(MakeElement("Label", "This part of the script is locked to Sirius Premium users. Purchase Premium in the Discord server (sirius.menu/discord)", 12), {
-                    Size = UDim2.new(1, -200, 0, 14),
-                    Position = UDim2.new(0, 150, 0, 138),
-                    TextWrapped = true,
-                    TextTransparency = 0.4
-                }), "Text")
-            })
-    	end
 	
 	return TabFunction
-end
-
+end   
 
 function OrionLib:Destroy()
 	Orion:Destroy()
