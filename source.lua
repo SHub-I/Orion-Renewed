@@ -1,3 +1,29 @@
+print("=== ORION DIAGNOSTIC START ===")
+
+-- Basic presence checks
+local function t(name, val) print(name .. " ->", type(val)) end
+
+t("TweenService", TweenService)
+t("game:GetService('TweenService')", pcall(function() return game:GetService("TweenService") end))
+t("AddConnection", AddConnection)
+t("OrionLib", OrionLib)
+t("MakeElement", MakeElement)
+t("AddThemeObject", AddThemeObject)
+t("ReturnProperty", ReturnProperty)
+t("task", task)
+if type(task) == "table" then print("task.delay ->", type(task.delay)) end
+print("delay global ->", type(delay))
+
+-- Install a one-time global error handler to capture the next error with full traceback
+local olderr = error
+error = function(msg, level)
+    print("=== ERROR HOOK ===")
+    print("error message:", msg)
+    print(debug.traceback())
+    return olderr(msg, level and level or 1)
+end
+
+print("=== ORION DIAGNOSTIC END ===")
 
 
 local UserInputService = game:GetService("UserInputService")
@@ -6,6 +32,16 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local HttpService = game:GetService("HttpService")
+
+-- ensure TweenService exists
+local TweenService = TweenService or game:GetService("TweenService")
+
+-- fallback for AddConnection if missing
+AddConnection = AddConnection or function(Signal, Fn) return Signal:Connect(Fn) end
+
+-- safeDelay fallback for executors without task.delay
+local function safeDelay(t, fn) if type(task)=="table" and type(task.delay)=="function" then task.delay(t,fn) elseif type(delay)=="function" then delay(t,fn) else spawn(function() wait(t) fn() end) end end
+
 
 local OrionLib = {
 	Elements = {},
