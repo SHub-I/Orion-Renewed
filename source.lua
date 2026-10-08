@@ -1,3 +1,51 @@
+-- SAFETY HEADER: place this at the very top of source.lua BEFORE any other code
+-- Ensures core services and helper shims exist across executors and load orders.
+
+-- Services (non-local so diagnostic checks see them)
+TweenService = TweenService or game:GetService("TweenService")
+UserInputService = UserInputService or game:GetService("UserInputService")
+RunService = RunService or game:GetService("RunService")
+HttpService = HttpService or game:GetService("HttpService")
+Players = Players or game:GetService("Players")
+
+-- safe local references
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer and LocalPlayer:GetMouse()
+
+-- AddConnection fallback (safe wrapper for :Connect)
+AddConnection = AddConnection or function(Signal, Fn)
+    if not Signal or type(Signal.Connect) ~= "function" then return end
+    local conn = Signal:Connect(Fn)
+    -- store if OrionLib exists later; otherwise the rest of the file will insert connections
+    if type(OrionLib) == "table" then
+        table.insert(OrionLib.Connections, conn)
+    end
+    return conn
+end
+
+-- safeDelay: use task.delay when available, otherwise fallback to delay/spawn
+safeDelay = safeDelay or function(t, fn)
+    if type(task) == "table" and type(task.delay) == "function" then
+        task.delay(t, fn)
+    elseif type(delay) == "function" then
+        delay(t, fn)
+    else
+        spawn(function() wait(t) fn() end)
+    end
+end
+
+-- small pcall wrapper for TweenService:Create to avoid executor-specific failures
+safeTween = safeTween or function(obj, tweenInfo, props)
+    if not TweenService or type(TweenService.Create) ~= "function" then return end
+    pcall(function()
+        local tw = TweenService:Create(obj, tweenInfo, props)
+        if tw and type(tw.Play) == "function" then tw:Play() end
+    end)
+end
+
+
+
+
 print("=== ORION DIAGNOSTIC START ===")
 
 -- Basic presence checks
