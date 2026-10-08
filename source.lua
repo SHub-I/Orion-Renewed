@@ -959,108 +959,97 @@ end)
 	end	
 
 	local TabFunction = {}
-    function TabFunction:MakeTab(TabConfig)
-        TabConfig = TabConfig or {}
-        TabConfig.Name = TabConfig.Name or "Tab"
-        TabConfig.Icon = TabConfig.Icon or ""
-        TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
+	function TabFunction:MakeTab(TabConfig)
+		TabConfig = TabConfig or {}
+		TabConfig.Name = TabConfig.Name or "Tab"
+		TabConfig.Icon = TabConfig.Icon or ""
+		TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
 
-        local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
-            Size = UDim2.new(1, 0, 0, 30),
-            Parent = TabHolder
-        }), {
-            AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
-                AnchorPoint = Vector2.new(0, 0.5),
-                Size = UDim2.new(0, 18, 0, 18),
-                Position = UDim2.new(0, 10, 0.5, 0),
-                ImageTransparency = 0.4,
-                Name = "Ico"
-            }), "Text"),
-            AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 14), {
-                Size = UDim2.new(1, -35, 1, 0),
-                Position = UDim2.new(0, 35, 0, 0),
-                Font = Enum.Font.GothamSemibold,
-                TextTransparency = 0.4,
-                Name = "Title"
-            }), "Text")
-        })
+		local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
+			Size = UDim2.new(1, 0, 0, 30),
+			Parent = TabHolder
+		}), {
+			AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
+				AnchorPoint = Vector2.new(0, 0.5),
+				Size = UDim2.new(0, 18, 0, 18),
+				Position = UDim2.new(0, 10, 0.5, 0),
+				ImageTransparency = 0.4,
+				Name = "Ico"
+			}), "Text"),
+			AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 14), {
+				Size = UDim2.new(1, -35, 1, 0),
+				Position = UDim2.new(0, 35, 0, 0),
+				Font = Enum.Font.GothamSemibold,
+				TextTransparency = 0.4,
+				Name = "Title"
+			}), "Text")
+		})
 
-        if GetIcon(TabConfig.Icon) ~= nil then
-            TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
-        end 
+		if GetIcon(TabConfig.Icon) ~= nil then
+			TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
+		end 
 
-        local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
-            Size = UDim2.new(1, -150, 1, -50),
-            Position = UDim2.new(0, 150, 0, 50),
-            Parent = MainWindow,
-            Visible = false,
-            Name = "ItemContainer"
-        }), {
-            MakeElement("List", 0, 6),
-            MakeElement("Padding", 15, 10, 10, 15)
-        }), "Divider")
+		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
+			Size = UDim2.new(1, -150, 1, -50),
+			Position = UDim2.new(0, 150, 0, 50),
+			Parent = MainWindow,
+			Visible = false,
+			Name = "ItemContainer"
+		}), {
+			MakeElement("List", 0, 6),
+			MakeElement("Padding", 15, 10, 10, 15)
+		}), "Divider")
 
-        AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-            Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
-        end)
+		AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+			Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
+		end)
 
-        if FirstTab then
-            FirstTab = false
-            TabFrame.Ico.ImageTransparency = 0
-            TabFrame.Title.TextTransparency = 0
-            TabFrame.Title.Font = Enum.Font.GothamBlack
-            Container.Visible = true
-        end    
+		if FirstTab then
+			FirstTab = false
+			TabFrame.Ico.ImageTransparency = 0
+			TabFrame.Title.TextTransparency = 0
+			TabFrame.Title.Font = Enum.Font.GothamBlack
+			Container.Visible = true
+		end    
 
-        AddConnection(TabFrame.MouseButton1Click, function()
-            for _, Tab in next, TabHolder:GetChildren() do
-                if Tab:IsA("TextButton") then
-                    Tab.Title.Font = Enum.Font.GothamSemibold
-                    pcall(function()
-                        TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0.4}):Play()
-                        TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
-                    end)
-                end    
-            end
+		AddConnection(TabFrame.MouseButton1Click, function()
+			for _, Tab in next, TabHolder:GetChildren() do
+				if Tab:IsA("TextButton") then
+					Tab.Title.Font = Enum.Font.GothamSemibold
+					pcall(function()
+						TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0.4}):Play()
+						TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
+					end)
+				end    
+			end
 
-            for _, ItemContainer in next, MainWindow:GetChildren() do
-                if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
-                    pcall(function()
-                        TweenService:Create(ItemContainer, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
-                            Position = ItemContainer.Position + UDim2.new(0, 200, 0, 0),
-                            BackgroundTransparency = 1
-                        }):Play()
-                    end)
+			for _, ItemContainer in next, MainWindow:GetChildren() do
+				if ItemContainer.Name == "ItemContainer" then
+					ItemContainer.Visible = false
+					ItemContainer.Position = UDim2.new(0, 150, 0, 50)
+					ItemContainer.BackgroundTransparency = 0
+				end
+			end
 
-                    task.delay(0.35, function()
-                        if ItemContainer and ItemContainer.Parent then
-                            ItemContainer.Visible = false
-                            ItemContainer.Position = UDim2.new(0, 150, 0, 50)
-                            ItemContainer.BackgroundTransparency = 0
-                        end
-                    end)
-                end    
-            end  
+			Container.Visible = true
+			Container.Position = UDim2.new(0, 150, 0, -40)
+			Container.BackgroundTransparency = 1
 
-            Container.Visible = true
-            Container.Position = UDim2.new(0, 150, 0, -40)
-            Container.BackgroundTransparency = 1
+			pcall(function()
+				TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+					Position = UDim2.new(0, 150, 0, 50),
+					BackgroundTransparency = 0
+				}):Play()
+			end)
 
-            pcall(function()
-                TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
-                    Position = UDim2.new(0, 150, 0, 50),
-                    BackgroundTransparency = 0
-                }):Play()
-            end)
+			pcall(function()
+				TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
+				TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
+			end)
 
-            pcall(function()
-                TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
-                TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
-            end)
-
-            TabFrame.Title.Font = Enum.Font.GothamBlack
-        end)
-    end
+			TabFrame.Title.Font = Enum.Font.GothamBlack
+		end)
+	end
 
 
 	
