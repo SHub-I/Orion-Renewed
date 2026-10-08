@@ -1,77 +1,3 @@
--- SAFETY HEADER: place this at the very top of source.lua BEFORE any other code
--- Ensures core services and helper shims exist across executors and load orders.
-
--- Services (non-local so diagnostic checks see them)
-TweenService = TweenService or game:GetService("TweenService")
-UserInputService = UserInputService or game:GetService("UserInputService")
-RunService = RunService or game:GetService("RunService")
-HttpService = HttpService or game:GetService("HttpService")
-Players = Players or game:GetService("Players")
-
--- safe local references
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer and LocalPlayer:GetMouse()
-
--- AddConnection fallback (safe wrapper for :Connect)
-AddConnection = AddConnection or function(Signal, Fn)
-    if not Signal or type(Signal.Connect) ~= "function" then return end
-    local conn = Signal:Connect(Fn)
-    -- store if OrionLib exists later; otherwise the rest of the file will insert connections
-    if type(OrionLib) == "table" then
-        table.insert(OrionLib.Connections, conn)
-    end
-    return conn
-end
-
--- safeDelay: use task.delay when available, otherwise fallback to delay/spawn
-safeDelay = safeDelay or function(t, fn)
-    if type(task) == "table" and type(task.delay) == "function" then
-        task.delay(t, fn)
-    elseif type(delay) == "function" then
-        delay(t, fn)
-    else
-        spawn(function() wait(t) fn() end)
-    end
-end
-
--- small pcall wrapper for TweenService:Create to avoid executor-specific failures
-safeTween = safeTween or function(obj, tweenInfo, props)
-    if not TweenService or type(TweenService.Create) ~= "function" then return end
-    pcall(function()
-        local tw = TweenService:Create(obj, tweenInfo, props)
-        if tw and type(tw.Play) == "function" then tw:Play() end
-    end)
-end
-
-
-
-
-print("=== ORION DIAGNOSTIC START ===")
-
--- Basic presence checks
-local function t(name, val) print(name .. " ->", type(val)) end
-
-t("TweenService", TweenService)
-t("game:GetService('TweenService')", pcall(function() return game:GetService("TweenService") end))
-t("AddConnection", AddConnection)
-t("OrionLib", OrionLib)
-t("MakeElement", MakeElement)
-t("AddThemeObject", AddThemeObject)
-t("ReturnProperty", ReturnProperty)
-t("task", task)
-if type(task) == "table" then print("task.delay ->", type(task.delay)) end
-print("delay global ->", type(delay))
-
--- Install a one-time global error handler to capture the next error with full traceback
-local olderr = error
-error = function(msg, level)
-    print("=== ERROR HOOK ===")
-    print("error message:", msg)
-    print(debug.traceback())
-    return olderr(msg, level and level or 1)
-end
-
-print("=== ORION DIAGNOSTIC END ===")
 
 
 local UserInputService = game:GetService("UserInputService")
@@ -80,16 +6,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local HttpService = game:GetService("HttpService")
-
--- ensure TweenService exists
-local TweenService = TweenService or game:GetService("TweenService")
-
--- fallback for AddConnection if missing
-AddConnection = AddConnection or function(Signal, Fn) return Signal:Connect(Fn) end
-
--- safeDelay fallback for executors without task.delay
-local function safeDelay(t, fn) if type(task)=="table" and type(task.delay)=="function" then task.delay(t,fn) elseif type(delay)=="function" then delay(t,fn) else spawn(function() wait(t) fn() end) end end
-
 
 local OrionLib = {
 	Elements = {},
@@ -711,30 +627,46 @@ function OrionLib:MakeWindow(WindowConfig)
 	OrionLib.Folder = WindowConfig.ConfigFolder
 	OrionLib.SaveCfg = WindowConfig.SaveConfig
 
-	pcall(function()
-		local fetchSuccess, fetchResult = pcall((game :: any).HttpGet, game, "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/reporter.lua")
-		if fetchSuccess and #fetchResult > 0 then
-			local execSuccess, Analytics = pcall(function()
-				return (loadstring(fetchResult) :: any)()
-			end)
-			if execSuccess and Analytics then
-				local reporter = Analytics.new({
-					url          = "https://rayfield-collect.sirius-software-ltd.workers.dev",
-					token        = "e1712bdd9e7aafe203236be61f472609e5ec8efad62aa86244b96aaca0c22267",
-					product_name = "Orion",
-					category     = "UILibrary",
-				})
-				pcall(function()
-					reporter:windowCreated({
-						script_name       = WindowConfig.Name,
-						script_version    = 'Orion Stable',
-						interface_version = 'Orion UI Stable',
-						config_saving     = WindowConfig.SaveConfig,
-					})
-				end)
-			end
-		end
-	end)
+    pcall(function()
+        local url = "https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/reporter.lua"
+
+        -- fetch the reporter script safely
+        local fetchSuccess, fetchResult = pcall(function()
+            return game:HttpGet(url)
+        end)
+
+        if fetchSuccess and type(fetchResult) == "string" and #fetchResult > 0 then
+            -- load the fetched code safely
+            local execSuccess, Analytics = pcall(function()
+                local fn, loadErr = loadstring(fetchResult)
+                if not fn then
+                    error("Failed to load reporter code: " .. tostring(loadErr))
+                end
+                return fn()
+            end)
+
+            if execSuccess and Analytics then
+                -- create reporter and call windowCreated inside pcall
+                pcall(function()
+                    local reporter = Analytics.new({
+                        url          = "https://rayfield-collect.sirius-software-ltd.workers.dev",
+                        token        = "e1712bdd9e7aafe203236be61f472609e5ec8efad62aa86244b96aaca0c22267",
+                        product_name = "Orion",
+                        category     = "UILibrary",
+                    })
+
+                    pcall(function()
+                        reporter:windowCreated({
+                            script_name       = WindowConfig.Name,
+                            script_version    = "Orion Stable",
+                            interface_version = "Orion UI Stable",
+                            config_saving     = WindowConfig.SaveConfig,
+                        })
+                    end)
+                end)
+            end
+        end
+    end)
 
 	if WindowConfig.SaveConfig then
 		if not isfolder(WindowConfig.ConfigFolder) then
@@ -742,142 +674,142 @@ function OrionLib:MakeWindow(WindowConfig)
 		end	
 	end
 
-	local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
-		Size = UDim2.new(1, 0, 1, -50)
-	}), {
-		MakeElement("List"),
-		MakeElement("Padding", 8, 0, 0, 8)
-	}), "Divider")
-
-	AddConnection(TabHolder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-		TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabHolder.UIListLayout.AbsoluteContentSize.Y + 16)
-	end)
-
-	local CloseBtn = SetChildren(SetProps(MakeElement("Button"), {
-		Size = UDim2.new(0.5, 0, 1, 0),
-		Position = UDim2.new(0.5, 0, 0, 0),
-		BackgroundTransparency = 1
-	}), {
-		AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072725342"), {
-			Position = UDim2.new(0, 9, 0, 6),
-			Size = UDim2.new(0, 18, 0, 18)
-		}), "Text")
-	})
-
-	local MinimizeBtn = SetChildren(SetProps(MakeElement("Button"), {
-		Size = UDim2.new(0.5, 0, 1, 0),
-		BackgroundTransparency = 1
-	}), {
-		AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
-			Position = UDim2.new(0, 9, 0, 6),
-			Size = UDim2.new(0, 18, 0, 18),
-			Name = "Ico"
-		}), "Text")
-	})
-
-	local DragPoint = SetProps(MakeElement("TFrame"), {
-		Size = UDim2.new(1, 0, 0, 50)
-	})
-
-	local WindowStuff = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-		Size = UDim2.new(0, 150, 1, -50),
-		Position = UDim2.new(0, 0, 0, 50)
-	}), {
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(1, 0, 0, 10),
-			Position = UDim2.new(0, 0, 0, 0)
-		}), "Second"), 
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(0, 10, 1, 0),
-			Position = UDim2.new(1, -10, 0, 0)
-		}), "Second"), 
-		AddThemeObject(SetProps(MakeElement("Frame"), {
-			Size = UDim2.new(0, 1, 1, 0),
-			Position = UDim2.new(1, -1, 0, 0)
-		}), "Stroke"), 
-		TabHolder,
-		SetChildren(SetProps(MakeElement("TFrame"), {
-			Size = UDim2.new(1, 0, 0, 50),
-			Position = UDim2.new(0, 0, 1, -50)
-		}), {
-			AddThemeObject(SetProps(MakeElement("Frame"), {
-				Size = UDim2.new(1, 0, 0, 1)
-			}), "Stroke"), 
-			AddThemeObject(SetChildren(SetProps(MakeElement("Frame"), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 32, 0, 32),
-				Position = UDim2.new(0, 10, 0.5, 0)
-			}), {
-				SetProps(MakeElement("Image", "https://www.roblox.com/headshot-thumbnail/image?userId=".. LocalPlayer.UserId .."&width=420&height=420&format=png"), {
-					Size = UDim2.new(1, 0, 1, 0)
-				}),
-				AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4031889928"), {
-					Size = UDim2.new(1, 0, 1, 0),
-				}), "Second"),
-				MakeElement("Corner", 1)
-			}), "Divider"),
-			SetChildren(SetProps(MakeElement("TFrame"), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 32, 0, 32),
-				Position = UDim2.new(0, 10, 0.5, 0)
-			}), {
-				AddThemeObject(MakeElement("Stroke"), "Stroke"),
-				MakeElement("Corner", 1)
-			}),
-			AddThemeObject(SetProps(MakeElement("Label", LocalPlayer.DisplayName, WindowConfig.HidePremium and 14 or 13), {
-				Size = UDim2.new(1, -60, 0, 13),
-				Position = WindowConfig.HidePremium and UDim2.new(0, 50, 0, 19) or UDim2.new(0, 50, 0, 12),
-				Font = Enum.Font.GothamBold,
-				ClipsDescendants = true
-			}), "Text"),
-			AddThemeObject(SetProps(MakeElement("Label", "", 12), {
-				Size = UDim2.new(1, -60, 0, 12),
-				Position = UDim2.new(0, 50, 1, -25),
-				Visible = not WindowConfig.HidePremium
-			}), "TextDark")
-		}),
-	}), "Second")
-
-	local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 14), {
-		Size = UDim2.new(1, -30, 2, 0),
-		Position = UDim2.new(0, 25, 0, -24),
-		Font = Enum.Font.GothamBlack,
-		TextSize = 20
-	}), "Text")
-
-	local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
-		Size = UDim2.new(1, 0, 0, 1),
-		Position = UDim2.new(0, 0, 1, -1)
-	}), "Stroke")
-
-local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
-    Parent = Orion,
-    Position = UDim2.new(0.5, -307, 0.5, -172),
-    Size = UDim2.new(0, 615, 0, 344),
-    ClipsDescendants = true
-}), {
-    SetChildren(SetProps(MakeElement("TFrame"), {
-        Size = UDim2.new(1, 0, 0, 50),
-        Name = "TopBar"
+    local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
+        Size = UDim2.new(1, 0, 1, -50)
     }), {
-        WindowName,
-        WindowTopBarLine,
-        AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
-            Size = UDim2.new(0, 70, 0, 30),
-            Position = UDim2.new(1, -90, 0, 10)
+        MakeElement("List"),
+        MakeElement("Padding", 8, 0, 0, 8)
+    }), "Divider")
+
+    AddConnection(TabHolder.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+        TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabHolder.UIListLayout.AbsoluteContentSize.Y + 16)
+    end)
+
+    local CloseBtn = SetChildren(SetProps(MakeElement("Button"), {
+        Size = UDim2.new(0.5, 0, 1, 0),
+        Position = UDim2.new(0.5, 0, 0, 0),
+        BackgroundTransparency = 1
+    }), {
+        AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072725342"), {
+            Position = UDim2.new(0, 9, 0, 6),
+            Size = UDim2.new(0, 18, 0, 18)
+        }), "Text")
+    })
+
+    local MinimizeBtn = SetChildren(SetProps(MakeElement("Button"), {
+        Size = UDim2.new(0.5, 0, 1, 0),
+        BackgroundTransparency = 1
+    }), {
+        AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://7072719338"), {
+            Position = UDim2.new(0, 9, 0, 6),
+            Size = UDim2.new(0, 18, 0, 18),
+            Name = "Ico"
+        }), "Text")
+    })
+
+    local DragPoint = SetProps(MakeElement("TFrame"), {
+        Size = UDim2.new(1, 0, 0, 50)
+    })
+
+    local WindowStuff = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
+        Size = UDim2.new(0, 150, 1, -50),
+        Position = UDim2.new(0, 0, 0, 50)
+    }), {
+        AddThemeObject(SetProps(MakeElement("Frame"), {
+            Size = UDim2.new(1, 0, 0, 10),
+            Position = UDim2.new(0, 0, 0, 0)
+        }), "Second"),
+        AddThemeObject(SetProps(MakeElement("Frame"), {
+            Size = UDim2.new(0, 10, 1, 0),
+            Position = UDim2.new(1, -10, 0, 0)
+        }), "Second"),
+        AddThemeObject(SetProps(MakeElement("Frame"), {
+            Size = UDim2.new(0, 1, 1, 0),
+            Position = UDim2.new(1, -1, 0, 0)
+        }), "Stroke"),
+        TabHolder,
+        SetChildren(SetProps(MakeElement("TFrame"), {
+            Size = UDim2.new(1, 0, 0, 50),
+            Position = UDim2.new(0, 0, 1, -50)
         }), {
-            AddThemeObject(MakeElement("Stroke"), "Stroke"),
             AddThemeObject(SetProps(MakeElement("Frame"), {
-                Size = UDim2.new(0, 1, 1, 0),
-                Position = UDim2.new(0.5, 0, 0, 0)
-            }), "Stroke"), 
-            CloseBtn,
-            MinimizeBtn
-        }), "Second"), 
-    }),
-    DragPoint,
-    WindowStuff
-}), "Main")
+                Size = UDim2.new(1, 0, 0, 1)
+            }), "Stroke"),
+            AddThemeObject(SetChildren(SetProps(MakeElement("Frame"), {
+                AnchorPoint = Vector2.new(0, 0.5),
+                Size = UDim2.new(0, 32, 0, 32),
+                Position = UDim2.new(0, 10, 0.5, 0)
+            }), {
+                SetProps(MakeElement("Image", "https://www.roblox.com/headshot-thumbnail/image?userId=".. LocalPlayer.UserId .."&width=420&height=420&format=png"), {
+                    Size = UDim2.new(1, 0, 1, 0)
+                }),
+                AddThemeObject(SetProps(MakeElement("Image", "rbxassetid://4031889928"), {
+                    Size = UDim2.new(1, 0, 1, 0)
+                }), "Second"),
+                MakeElement("Corner", 1)
+            }), "Divider"),
+            SetChildren(SetProps(MakeElement("TFrame"), {
+                AnchorPoint = Vector2.new(0, 0.5),
+                Size = UDim2.new(0, 32, 0, 32),
+                Position = UDim2.new(0, 10, 0.5, 0)
+            }), {
+                AddThemeObject(MakeElement("Stroke"), "Stroke"),
+                MakeElement("Corner", 1)
+            }),
+            AddThemeObject(SetProps(MakeElement("Label", LocalPlayer.DisplayName, WindowConfig.HidePremium and 14 or 13), {
+                Size = UDim2.new(1, -60, 0, 13),
+                Position = WindowConfig.HidePremium and UDim2.new(0, 50, 0, 19) or UDim2.new(0, 50, 0, 12),
+                Font = Enum.Font.GothamBold,
+                ClipsDescendants = true
+            }), "Text"),
+            AddThemeObject(SetProps(MakeElement("Label", "", 12), {
+                Size = UDim2.new(1, -60, 0, 12),
+                Position = UDim2.new(0, 50, 1, -25),
+                Visible = not WindowConfig.HidePremium
+            }), "TextDark")
+        })
+    }), "Second")
+
+    local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 14), {
+        Size = UDim2.new(1, -30, 2, 0),
+        Position = UDim2.new(0, 25, 0, -24),
+        Font = Enum.Font.GothamBlack,
+        TextSize = 20
+    }), "Text")
+
+    local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1)
+    }), "Stroke")
+
+    local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
+        Parent = Orion,
+        Position = UDim2.new(0.5, -307, 0.5, -172),
+        Size = UDim2.new(0, 615, 0, 344),
+        ClipsDescendants = true
+    }), {
+        SetChildren(SetProps(MakeElement("TFrame"), {
+            Size = UDim2.new(1, 0, 0, 50),
+            Name = "TopBar"
+        }), {
+            WindowName,
+            WindowTopBarLine,
+            AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
+                Size = UDim2.new(0, 70, 0, 30),
+                Position = UDim2.new(1, -90, 0, 10)
+            }), {
+                AddThemeObject(MakeElement("Stroke"), "Stroke"),
+                AddThemeObject(SetProps(MakeElement("Frame"), {
+                    Size = UDim2.new(0, 1, 1, 0),
+                    Position = UDim2.new(0.5, 0, 0, 0)
+                }), "Stroke"),
+                CloseBtn,
+                MinimizeBtn
+            }), "Second")
+        }),
+        DragPoint,
+        WindowStuff
+    }), "Main")
 
 ---------------------------------------------------------------------
 -- ReScale (Bottom-right resize handle) — Smooth + Icon
@@ -1043,79 +975,110 @@ end)
 	end	
 
 	local TabFunction = {}
-	function TabFunction:MakeTab(TabConfig)
-		TabConfig = TabConfig or {}
-		TabConfig.Name = TabConfig.Name or "Tab"
-		TabConfig.Icon = TabConfig.Icon or ""
-		TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
+    function TabFunction:MakeTab(TabConfig)
+        TabConfig = TabConfig or {}
+        TabConfig.Name = TabConfig.Name or "Tab"
+        TabConfig.Icon = TabConfig.Icon or ""
+        TabConfig.PremiumOnly = TabConfig.PremiumOnly or false
 
-		local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
-			Size = UDim2.new(1, 0, 0, 30),
-			Parent = TabHolder
-		}), {
-			AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
-				AnchorPoint = Vector2.new(0, 0.5),
-				Size = UDim2.new(0, 18, 0, 18),
-				Position = UDim2.new(0, 10, 0.5, 0),
-				ImageTransparency = 0.4,
-				Name = "Ico"
-			}), "Text"),
-			AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 14), {
-				Size = UDim2.new(1, -35, 1, 0),
-				Position = UDim2.new(0, 35, 0, 0),
-				Font = Enum.Font.GothamSemibold,
-				TextTransparency = 0.4,
-				Name = "Title"
-			}), "Text")
-		})
+        local TabFrame = SetChildren(SetProps(MakeElement("Button"), {
+            Size = UDim2.new(1, 0, 0, 30),
+            Parent = TabHolder
+        }), {
+            AddThemeObject(SetProps(MakeElement("Image", TabConfig.Icon), {
+                AnchorPoint = Vector2.new(0, 0.5),
+                Size = UDim2.new(0, 18, 0, 18),
+                Position = UDim2.new(0, 10, 0.5, 0),
+                ImageTransparency = 0.4,
+                Name = "Ico"
+            }), "Text"),
+            AddThemeObject(SetProps(MakeElement("Label", TabConfig.Name, 14), {
+                Size = UDim2.new(1, -35, 1, 0),
+                Position = UDim2.new(0, 35, 0, 0),
+                Font = Enum.Font.GothamSemibold,
+                TextTransparency = 0.4,
+                Name = "Title"
+            }), "Text")
+        })
 
-		if GetIcon(TabConfig.Icon) ~= nil then
-			TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
-		end	
+        if GetIcon(TabConfig.Icon) ~= nil then
+            TabFrame.Ico.Image = GetIcon(TabConfig.Icon)
+        end 
 
-		local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
-			Size = UDim2.new(1, -150, 1, -50),
-			Position = UDim2.new(0, 150, 0, 50),
-			Parent = MainWindow,
-			Visible = false,
-			Name = "ItemContainer"
-		}), {
-			MakeElement("List", 0, 6),
-			MakeElement("Padding", 15, 10, 10, 15)
-		}), "Divider")
+        local Container = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 5), {
+            Size = UDim2.new(1, -150, 1, -50),
+            Position = UDim2.new(0, 150, 0, 50),
+            Parent = MainWindow,
+            Visible = false,
+            Name = "ItemContainer"
+        }), {
+            MakeElement("List", 0, 6),
+            MakeElement("Padding", 15, 10, 10, 15)
+        }), "Divider")
 
-		AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
-			Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
-		end)
+        AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+            Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
+        end)
 
-		if FirstTab then
-			FirstTab = false
-			TabFrame.Ico.ImageTransparency = 0
-			TabFrame.Title.TextTransparency = 0
-			TabFrame.Title.Font = Enum.Font.GothamBlack
-			Container.Visible = true
-		end    
+        if FirstTab then
+            FirstTab = false
+            TabFrame.Ico.ImageTransparency = 0
+            TabFrame.Title.TextTransparency = 0
+            TabFrame.Title.Font = Enum.Font.GothamBlack
+            Container.Visible = true
+        end    
 
-		AddConnection(TabFrame.MouseButton1Click, function()
-			for _, Tab in next, TabHolder:GetChildren() do
-				if Tab:IsA("TextButton") then
-					Tab.Title.Font = Enum.Font.GothamSemibold
-					TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.4}):Play()
-					TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
-				end    
-			end
-			for _, ItemContainer in next, MainWindow:GetChildren() do
-				if ItemContainer.Name == "ItemContainer" then
-					ItemContainer.Visible = false
-				end    
-			end  
-			TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
-			TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-			TabFrame.Title.Font = Enum.Font.GothamBlack
-			Container.Visible = true   
-		end)
+        AddConnection(TabFrame.MouseButton1Click, function()
+            for _, Tab in next, TabHolder:GetChildren() do
+                if Tab:IsA("TextButton") then
+                    Tab.Title.Font = Enum.Font.GothamSemibold
+                    pcall(function()
+                        TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0.4}):Play()
+                        TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0.4}):Play()
+                    end)
+                end    
+            end
 
-	
+            for _, ItemContainer in next, MainWindow:GetChildren() do
+                if ItemContainer.Name == "ItemContainer" and ItemContainer.Visible then
+                    pcall(function()
+                        TweenService:Create(ItemContainer, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+                            Position = ItemContainer.Position + UDim2.new(0, 200, 0, 0),
+                            BackgroundTransparency = 1
+                        }):Play()
+                    end)
+
+                    safeDelay(0.35, function()
+                        if ItemContainer and ItemContainer.Parent then
+                            ItemContainer.Visible = false
+                            ItemContainer.Position = UDim2.new(0, 150, 0, 50)
+                            ItemContainer.BackgroundTransparency = 0
+                        end
+                    end)
+                end    
+            end  
+
+            Container.Visible = true
+            Container.Position = UDim2.new(0, 150, 0, -40)
+            Container.BackgroundTransparency = 1
+
+            pcall(function()
+                TweenService:Create(Container, TweenInfo.new(0.35, Enum.EasingStyle.Quint), {
+                    Position = UDim2.new(0, 150, 0, 50),
+                    BackgroundTransparency = 0
+                }):Play()
+            end)
+
+            pcall(function()
+                TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {ImageTransparency = 0}):Play()
+                TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
+            end)
+
+            TabFrame.Title.Font = Enum.Font.GothamBlack
+        end)
+    end
+
+
 		local function GetElements(ItemParent)
 			local ElementFunction = {}
 			function ElementFunction:AddLabel(Text)
@@ -1395,35 +1358,13 @@ end)
 					end
 				end)
 
-                function Slider:Set(Value)
-
-                    self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
-
-                    local Range = SliderConfig.Max - SliderConfig.Min
-                    if Range <= 0 then
-                        Range = 1
-                    end
-
-                    local Scale = math.clamp(
-                        (self.Value - SliderConfig.Min) / Range,
-                        0,
-                        1
-                    )
-
-                    TweenService:Create(
-                        SliderDrag,
-                        TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {
-                            Size = UDim2.fromScale(Scale, 1)
-                        }
-                    ):Play()
-
-                    SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-                    SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
-
-                    SliderConfig.Callback(self.Value)
-
-                end      
+				function Slider:Set(Value)
+					self.Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
+					TweenService:Create(SliderDrag,TweenInfo.new(.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),{Size = UDim2.fromScale((self.Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)}):Play()
+					SliderBar.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
+					SliderDrag.Value.Text = tostring(self.Value) .. " " .. SliderConfig.ValueName
+					SliderConfig.Callback(self.Value)
+				end      
 
 				Slider:Set(Slider.Value)
 				if SliderConfig.Flag then				
