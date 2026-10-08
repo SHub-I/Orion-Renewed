@@ -1032,7 +1032,7 @@ end)
                         }):Play()
                     end)
 
-                    safeDelay(0.35, function()
+                    task.delay(0.35, function()
                         if ItemContainer and ItemContainer.Parent then
                             ItemContainer.Visible = false
                             ItemContainer.Position = UDim2.new(0, 150, 0, 50)
