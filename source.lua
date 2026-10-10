@@ -533,6 +533,7 @@ end
 ---------------------------------------------------------------------
 
 function OrionLib:ApplyTheme()
+	OrionLib:UpdateGlobalSearch()
     for key, objects in pairs(OrionLib.ThemeObjects) do
         local col = OrionLib.Themes[OrionLib.SelectedTheme][key]
         if col then
@@ -603,6 +604,95 @@ if not isfolder("OrionThemes") then
     makefolder("OrionThemes")
 end
 
+---------------------------------------------------------------------
+-- BLIZT GLOBAL SEARCH (GUI + LOGIC)
+---------------------------------------------------------------------
+
+OrionLib.GlobalSearch = nil
+OrionLib.SearchTargets = {}
+
+function OrionLib:RegisterSearchTarget(container)
+    table.insert(OrionLib.SearchTargets, container)
+end
+
+function OrionLib:CreateGlobalSearch(parent)
+    local GS = Instance.new("TextBox")
+    GS.Name = "GlobalSearch"
+    GS.PlaceholderText = "Search..."
+    GS.Text = ""
+    GS.ClearTextOnFocus = false
+    GS.Size = UDim2.new(1, -20, 0, 32)
+    GS.Position = UDim2.new(0, 10, 0, 10)
+    GS.TextColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Text
+    GS.TextSize = 14
+    GS.Font = Enum.Font.Gotham
+    GS.BorderSizePixel = 0
+    GS.TextXAlignment = Enum.TextXAlignment.Left
+    GS.BackgroundColor3 = OrionLib.Themes[OrionLib.SelectedTheme].Main
+    GS.Parent = parent
+
+    SetChildren(GS, {
+        MakeElement("Padding", 0, 10, 0, 0),
+        MakeElement("Corner", 0.35, 0)
+    })
+
+    local Icon = Instance.new("ImageLabel")
+    Icon.Image = "rbxassetid://7072717695"
+    Icon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+    Icon.BackgroundTransparency = 1
+    Icon.AnchorPoint = Vector2.new(1, 0.5)
+    Icon.Position = UDim2.new(1, -6, 0.5, 0)
+    Icon.Size = UDim2.new(0, 18, 0, 18)
+    Icon.Parent = GS
+
+    OrionLib.GlobalSearch = GS
+    return GS
+end
+
+function OrionLib:UpdateGlobalSearch()
+    if not OrionLib.GlobalSearch then return end
+    local theme = OrionLib.Themes[OrionLib.SelectedTheme]
+    OrionLib.GlobalSearch.PlaceholderColor3 = theme.Text
+    OrionLib.GlobalSearch.TextColor3 = theme.Text
+    OrionLib.GlobalSearch.BackgroundColor3 = theme.Main
+end
+
+local function FilterContainer(container, query)
+    query = string.lower(query)
+
+    for _, obj in ipairs(container:GetChildren()) do
+        if obj:IsA("Frame") or obj:IsA("TextLabel") or obj:IsA("TextButton") then
+            local text = ""
+
+            if obj:FindFirstChild("Title") then
+                text = obj.Title.Text
+            elseif obj:IsA("TextLabel") then
+                text = obj.Text
+            end
+
+            text = string.lower(text or "")
+            local match = text:find(query, 1, true) ~= nil
+
+            TweenService:Create(obj, TweenInfo.new(0.15), {
+                BackgroundTransparency = match and 0 or 0.6,
+                Visible = match
+            }):Play()
+        end
+    end
+end
+
+function OrionLib:EnableGlobalSearch()
+    if not OrionLib.GlobalSearch then return end
+
+    OrionLib.GlobalSearch:GetPropertyChangedSignal("Text"):Connect(function()
+        local q = OrionLib.GlobalSearch.Text
+
+        for _, container in ipairs(OrionLib.SearchTargets) do
+            FilterContainer(container, q)
+        end
+    end)
+end
+
 
 
 function OrionLib:MakeWindow(WindowConfig)
@@ -667,6 +757,7 @@ function OrionLib:MakeWindow(WindowConfig)
             end
         end
     end)
+OrionLib:EnableGlobalSearch()
 
 	if WindowConfig.SaveConfig then
 		if not isfolder(WindowConfig.ConfigFolder) then
@@ -810,6 +901,7 @@ function OrionLib:MakeWindow(WindowConfig)
         DragPoint,
         WindowStuff
     }), "Main")
+	local GlobalSearch = OrionLib:CreateGlobalSearch(MainWindow.TopBar)
 
 ---------------------------------------------------------------------
 -- ReScale (Bottom-right resize handle) — Smooth + Icon
@@ -1015,6 +1107,7 @@ end)
             MakeElement("List", 0, 6),
             MakeElement("Padding", 15, 10, 10, 15)
         }), "Divider")
+		OrionLib:RegisterSearchTarget(Container)
 
         AddConnection(Container.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
             Container.CanvasSize = UDim2.new(0, 0, 0, Container.UIListLayout.AbsoluteContentSize.Y + 30)
