@@ -1250,89 +1250,24 @@ end)
             Container.Visible = true
         end    
 
-AddConnection(TabFrame.MouseButton1Click, function()
-
-    -- Reset tab visuals
-    for _, Tab in ipairs(TabHolder:GetChildren()) do
-        if Tab:IsA("TextButton") then
-            Tab.Title.Font = Enum.Font.GothamSemibold
-
-            pcall(function()
-                TweenService:Create(
-                    Tab.Ico,
-                    TweenInfo.new(0.25, Enum.EasingStyle.Quint),
-                    {ImageTransparency = 0.4}
-                ):Play()
-
-                TweenService:Create(
-                    Tab.Title,
-                    TweenInfo.new(0.25, Enum.EasingStyle.Quint),
-                    {TextTransparency = 0.4}
-                ):Play()
-            end)
-        end
-    end
-
-    -- Hide other containers
-    for _, ItemContainer in ipairs(MainWindow:GetChildren()) do
-        if ItemContainer.Name == "ItemContainer"
-            and ItemContainer ~= Container
-            and ItemContainer.Visible then
-
-            pcall(function()
-                TweenService:Create(
-                    ItemContainer,
-                    TweenInfo.new(0.35, Enum.EasingStyle.Quint),
-                    {
-                        Position = ItemContainer.Position + UDim2.new(0, 200, 0, 0),
-                        BackgroundTransparency = 1
-                    }
-                ):Play()
-            end)
-
-            task.delay(0.35, function()
-                if ItemContainer and ItemContainer.Parent then
-                    ItemContainer.Visible = false
-                    ItemContainer.Position = UDim2.new(0, 150, 0, 50)
-                    ItemContainer.BackgroundTransparency = 0
-                end
-            end)
-        end
-    end
-
-    -- Show selected container
-    Container.Visible = true
-    Container.Position = UDim2.new(0, 150, 0, -40)
-    Container.BackgroundTransparency = 1
-
-    pcall(function()
-        TweenService:Create(
-            Container,
-            TweenInfo.new(0.35, Enum.EasingStyle.Quint),
-            {
-                Position = UDim2.new(0, 150, 0, 50),
-                BackgroundTransparency = 0
-            }
-        ):Play()
-    end)
-
-    -- Highlight selected tab
-    pcall(function()
-        TweenService:Create(
-            TabFrame.Ico,
-            TweenInfo.new(0.25, Enum.EasingStyle.Quint),
-            {ImageTransparency = 0}
-        ):Play()
-
-        TweenService:Create(
-            TabFrame.Title,
-            TweenInfo.new(0.25, Enum.EasingStyle.Quint),
-            {TextTransparency = 0}
-        ):Play()
-    end)
-
-    TabFrame.Title.Font = Enum.Font.GothamBlack
-end)
+		AddConnection(TabFrame.MouseButton1Click, function()
+			for _, Tab in next, TabHolder:GetChildren() do
+				if Tab:IsA("TextButton") then
+					Tab.Title.Font = Enum.Font.GothamSemibold
+					TweenService:Create(Tab.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0.4}):Play()
+					TweenService:Create(Tab.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0.4}):Play()
+				end    
+			end
+			for _, ItemContainer in next, MainWindow:GetChildren() do
+				if ItemContainer.Name == "ItemContainer" then
+					ItemContainer.Visible = false
+				end    
+			end  
+			TweenService:Create(TabFrame.Ico, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+			TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+			TabFrame.Title.Font = Enum.Font.GothamBlack
+			Container.Visible = true   
+		end)
 
 
 		local function GetElements(ItemParent)
