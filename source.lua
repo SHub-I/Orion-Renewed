@@ -2092,13 +2092,7 @@ end)
 			})
 		end
 		return ElementFunction   
-	end  
-	
-	OrionLib:MakeNotification({
-		Name = "UI Library Upgrade",
-		Content = "New UI Library Available at sirius.menu/discord and sirius.menu/rayfield",
-		Time = 5
-	})
+	end
 	
 
 	
