@@ -931,11 +931,26 @@ ResizeHandle.InputBegan:Connect(function(input)
         resizeStartPos = Vector2.new(input.Position.X, input.Position.Y)
         resizeStartSize = MainWindow.Size
 
-		if ResizeIcon and ResizeIcon.Parent then
-    		TweenService:Create(ResizeIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-        		ImageTransparency = 0
-    	}):Play()
-	end
+        if ResizeIcon and ResizeIcon.Parent then
+            TweenService:Create(
+                ResizeIcon,
+                TweenInfo.new(0.15, Enum.EasingStyle.Quad),
+                {
+                    ImageTransparency = 0
+                }
+            ):Play()
+        end
+
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        TweenService:Create(
+            MainWindow,
+            TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+            {
+                Size = UDim2.new(0, 615, 0, 344)
+            }
+        ):Play()
+    end
+end)
 
 ResizeHandle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
