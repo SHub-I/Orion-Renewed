@@ -465,36 +465,48 @@ end
 
 
 ---------------------------------------------------------------------
--- RAYFIELD GEN2 STYLE FILE-BASED THEME SYSTEM FOR ORION RENEWED
+-- ORION FILE-BASED THEME SYSTEM
 ---------------------------------------------------------------------
 
 local HttpService = game:GetService("HttpService")
 
--- Convert hex → Color3
+local THEME_FOLDER = "OrionThemes"
+
+if not isfolder(THEME_FOLDER) then
+    makefolder(THEME_FOLDER)
+end
+
+---------------------------------------------------------------------
+-- COLOR UTILS
+---------------------------------------------------------------------
+
 local function HexToColor3(hex)
-    hex = hex:gsub("#","")
-    if #hex ~= 6 then return Color3.new(1,1,1) end
+    hex = tostring(hex):gsub("#", "")
+
+    if #hex ~= 6 then
+        return Color3.new(1, 1, 1)
+    end
+
     return Color3.fromRGB(
-        tonumber(hex:sub(1,2),16),
-        tonumber(hex:sub(3,4),16),
-        tonumber(hex:sub(5,6),16)
+        tonumber(hex:sub(1, 2), 16) or 255,
+        tonumber(hex:sub(3, 4), 16) or 255,
+        tonumber(hex:sub(5, 6), 16) or 255
     )
 end
 
--- Convert Color3 → hex
-local function Color3ToHex(c)
-    return string.format("#%02X%02X%02X",
-        math.floor(c.R*255),
-        math.floor(c.G*255),
-        math.floor(c.B*255)
+local function Color3ToHex(col)
+    return string.format(
+        "#%02X%02X%02X",
+        math.round(col.R * 255),
+        math.round(col.G * 255),
+        math.round(col.B * 255)
     )
 end
 
 ---------------------------------------------------------------------
--- NEW THEME STORAGE
+-- THEME STORAGE
 ---------------------------------------------------------------------
 
--- Remove your old Themes table entirely.
 OrionLib.Themes = {
     Default = {
         Main = Color3.fromRGB(25,25,25),
@@ -507,22 +519,32 @@ OrionLib.Themes = {
 }
 
 OrionLib.SelectedTheme = "Default"
-OrionLib.ThemeObjects = {} -- keep this
+OrionLib.ThemeObjects = OrionLib.ThemeObjects or {}
 
 ---------------------------------------------------------------------
--- REGISTER THEME OBJECTS
+-- REGISTER THEME OBJECT
 ---------------------------------------------------------------------
 
 function OrionLib:AddThemeObject(obj, key)
-    if not OrionLib.ThemeObjects[key] then
-        OrionLib.ThemeObjects[key] = {}
+    if not obj then
+        return nil
     end
 
-    table.insert(OrionLib.ThemeObjects[key], obj)
+    OrionLib.ThemeObjects[key] =
+        OrionLib.ThemeObjects[key] or {}
+
+    table.insert(
+        OrionLib.ThemeObjects[key],
+        obj
+    )
 
     local prop = ReturnProperty(obj)
-    if prop then
-        obj[prop] = OrionLib.Themes[OrionLib.SelectedTheme][key]
+
+    local theme =
+        OrionLib.Themes[OrionLib.SelectedTheme]
+
+    if prop and theme and theme[key] then
+        obj[prop] = theme[key]
     end
 
     return obj
@@ -533,17 +555,42 @@ end
 ---------------------------------------------------------------------
 
 function OrionLib:ApplyTheme()
-	OrionLib:UpdateGlobalSearch()
+
+    pcall(function()
+        OrionLib:UpdateGlobalSearch()
+    end)
+
+    local theme =
+        OrionLib.Themes[OrionLib.SelectedTheme]
+
+    if not theme then
+        return
+    end
+
     for key, objects in pairs(OrionLib.ThemeObjects) do
-        local col = OrionLib.Themes[OrionLib.SelectedTheme][key]
-        if col then
-            for _, obj in ipairs(objects) do
-                local prop = ReturnProperty(obj)
-                if prop then
-                    obj[prop] = col
+
+        local color = theme[key]
+
+        if color then
+
+            for i = #objects, 1, -1 do
+
+                local obj = objects[i]
+
+                if not obj or obj.Parent == nil then
+                    table.remove(objects, i)
+                else
+                    local prop = ReturnProperty(obj)
+
+                    if prop then
+                        obj[prop] = color
+                    end
                 end
+
             end
+
         end
+
     end
 end
 
@@ -552,17 +599,26 @@ end
 ---------------------------------------------------------------------
 
 function OrionLib:SaveThemeFile(name)
-    if not isfolder("OrionThemes") then
-        makefolder("OrionThemes")
+
+    local theme =
+        OrionLib.Themes[OrionLib.SelectedTheme]
+
+    if not theme then
+        return false
     end
 
     local data = {}
 
-    for key, col in pairs(OrionLib.Themes[OrionLib.SelectedTheme]) do
-        data[key] = Color3ToHex(col)
+    for key, color in pairs(theme) do
+        data[key] = Color3ToHex(color)
     end
 
-    writefile("OrionThemes/orion-r_theme_"..name..".json", HttpService:JSONEncode(data))
+    writefile(
+        THEME_FOLDER .. "/orion-r_theme_" .. name .. ".json",
+        HttpService:JSONEncode(data)
+    )
+
+    return true
 end
 
 ---------------------------------------------------------------------
@@ -570,16 +626,34 @@ end
 ---------------------------------------------------------------------
 
 function OrionLib:LoadThemeFile(name)
-    local path = "OrionThemes/orion-r_theme_"..name..".json"
-    if not isfile(path) then return false end
 
-    local data = HttpService:JSONDecode(readfile(path))
+    local path =
+        THEME_FOLDER .. "/orion-r_theme_" .. name .. ".json"
 
-    for key, hex in pairs(data) do
-        OrionLib.Themes[OrionLib.SelectedTheme][key] = HexToColor3(hex)
+    if not isfile(path) then
+        return false
+    end
+
+    local success, data = pcall(function()
+        return HttpService:JSONDecode(
+            readfile(path)
+        )
+    end)
+
+    if not success then
+        warn("Orion Theme Loader: Invalid theme file")
+        return false
+    end
+
+    local theme =
+        OrionLib.Themes[OrionLib.SelectedTheme]
+
+    for key, value in pairs(data) do
+        theme[key] = HexToColor3(value)
     end
 
     OrionLib:ApplyTheme()
+
     return true
 end
 
@@ -588,14 +662,17 @@ end
 ---------------------------------------------------------------------
 
 function OrionLib:DeleteThemeFile(name)
-    local path = "OrionThemes/orion-r_theme_"..name..".json"
+
+    local path =
+        THEME_FOLDER .. "/orion-r_theme_" .. name .. ".json"
+
     if isfile(path) then
         delfile(path)
         return true
     end
+
     return false
 end
-
 ---------------------------------------------------------------------
 -- AUTO-CREATE THEME FOLDER ON EXECUTION
 ---------------------------------------------------------------------
