@@ -937,6 +937,18 @@ ResizeHandle.InputBegan:Connect(function(input)
     end
 end)
 
+ResizeHandle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        TweenService:Create(
+            MainWindow,
+            TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+            {
+                Size = UDim2.new(0, 615, 0, 344)
+            }
+        ):Play()
+    end
+end)
+
 MakeElement("Corner", 0, 6).Parent = ResizeHandle
 AddThemeObject(ResizeHandle, "Second")
 
@@ -2116,7 +2128,7 @@ end)
 	end
 
 	OrionLib:MakeNotification({
-		Name = "Running v1.5.3",
+		Name = "Running v1.5.5",
 		Content = "Enjoy!",
 		Time = 5,
 		Image = "Heart"
