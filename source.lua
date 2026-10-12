@@ -1192,7 +1192,7 @@ end)
                 TweenService:Create(TabFrame.Title, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {TextTransparency = 0}):Play()
             end)
 
-            TabFrame.Title.Font = Enum.Font.GothamBlack
+            TabFrame.Title.Font = Enum.Font.FredokaOne
         end)
     end
 
@@ -2114,6 +2114,13 @@ end)
 		end
 		return ElementFunction   
 	end
+
+	OrionLib:MakeNotification({
+		Name = "Running v1.5.3",
+		Content = "Enjoy!",
+		Time = 5
+		Image = "Heart"
+	})
 	
 
 	
