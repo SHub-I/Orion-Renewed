@@ -765,8 +765,9 @@ OrionLib:EnableGlobalSearch()
 		end	
 	end
 
-    local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
-        Size = UDim2.new(1, 0, 1, -50)
+	local TabHolder = AddThemeObject(SetChildren(SetProps(MakeElement("ScrollFrame", Color3.fromRGB(255, 255, 255), 4), {
+        Size = UDim2.new(1, 0, 1, -95),
+        Position = UDim2.new(0, 0, 0, 45)
     }), {
         MakeElement("List"),
         MakeElement("Padding", 8, 0, 0, 8)
@@ -867,6 +868,10 @@ OrionLib:EnableGlobalSearch()
         Font = Enum.Font.GothamBlack,
         TextSize = 20
     }), "Text")
+	
+	local GlobalSearch = OrionLib:CreateGlobalSearch(WindowStuff)
+	GlobalSearch.Size = UDim2.new(1, -20, 0, 32)
+	GlobalSearch.Position = UDim2.new(0, 10, 0, 10)
 
     local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
         Size = UDim2.new(1, 0, 0, 1),
@@ -901,7 +906,6 @@ OrionLib:EnableGlobalSearch()
         DragPoint,
         WindowStuff
     }), "Main")
-	local GlobalSearch = OrionLib:CreateGlobalSearch(MainWindow.TopBar)
 
 ---------------------------------------------------------------------
 -- ReScale (Bottom-right resize handle) — Smooth + Icon
