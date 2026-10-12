@@ -931,11 +931,12 @@ ResizeHandle.InputBegan:Connect(function(input)
         resizeStartPos = Vector2.new(input.Position.X, input.Position.Y)
         resizeStartSize = MainWindow.Size
 
-        TweenService:Create(ResizeIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            ImageTransparency = 0
-        }):Play()
-    end
-end)
+		if ResizeIcon and ResizeIcon.Parent then
+    		TweenService:Create(ResizeIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+        		ImageTransparency = 0
+    	}):Play()
+	end
+
 
 ResizeHandle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -2128,7 +2129,7 @@ end)
 	end
 
 	OrionLib:MakeNotification({
-		Name = "Running v1.5.5",
+		Name = "Running v1.5.6",
 		Content = "Enjoy!",
 		Time = 5,
 		Image = "Heart"
