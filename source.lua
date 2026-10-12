@@ -921,6 +921,22 @@ local ResizeHandle = Create("Frame", {
     Name = "ResizeHandle"
 })
 
+ResizeHandle.InputBegan:Connect(function(input)
+    if Minimized then
+        return
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        resizing = true
+        resizeStartPos = Vector2.new(input.Position.X, input.Position.Y)
+        resizeStartSize = MainWindow.Size
+
+        TweenService:Create(ResizeIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            ImageTransparency = 0
+        }):Play()
+    end
+end)
+
 MakeElement("Corner", 0, 6).Parent = ResizeHandle
 AddThemeObject(ResizeHandle, "Second")
 
