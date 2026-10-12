@@ -937,7 +937,6 @@ ResizeHandle.InputBegan:Connect(function(input)
     	}):Play()
 	end
 
-
 ResizeHandle.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
         TweenService:Create(
@@ -2129,7 +2128,7 @@ end)
 	end
 
 	OrionLib:MakeNotification({
-		Name = "Running v1.5.6",
+		Name = "Running v1.5.5",
 		Content = "Enjoy!",
 		Time = 5,
 		Image = "Heart"
