@@ -62,6 +62,8 @@ return {
 		["at-sign"] = "rbxassetid://7733673907",
 		award = "rbxassetid://7733673987",
 		axe = "rbxassetid://7733674079",
+		["asteroid-hollow"] = "rbxassetid://114223900804069"
+		["asteroid-filled"] = "rbxassetid://126791064947443"
 		banknote = "rbxassetid://7733674153",
 		["bar-chart"] = "rbxassetid://7733674319",
 		["bar-chart-2"] = "rbxassetid://7733674239",
