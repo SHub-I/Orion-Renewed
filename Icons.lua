@@ -296,6 +296,8 @@ return {
 		inspect = "rbxassetid://7733964808",
 		italic = "rbxassetid://7733964917",
 		["jersey-pound"] = "rbxassetid://7733965029",
+		["knife-hollow"] = "rbxassetid://121291839280202",
+		["knife-filled"] = "rbxassetid://119322761980760",
 		key = "rbxassetid://7733965118",
 		landmark = "rbxassetid://7733965184",
 		languages = "rbxassetid://7733965249",
